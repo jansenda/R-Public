@@ -49,5 +49,6 @@ R-Public.Rproj
 
 # Hide the .gitignore file
 .gitignore
-debug.log
+
+# Hide debug.log
 debug.log

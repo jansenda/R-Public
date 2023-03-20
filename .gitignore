@@ -37,3 +37,15 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+
+### CUSTOM ###
+# Hide Apple Desktop Services Store
+.DS_Store
+
+# Don't share the R project file (user/computer specific file)
+.Rproj
+R-Public.Rproj
+
+# Hide the .gitignore file
+.gitignore

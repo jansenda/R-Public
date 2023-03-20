@@ -1,0 +1,154 @@
+---
+title: "R Notebook - Template - MySQL Data Access Using R (multiple tables)"
+date: "March 2023"
+author: "Daan Jansen"
+output:
+  html_document:
+    df_print: paged
+    html_notebook: default
+    pdf_document: default
+    theme:
+      bootswatch: journal
+---
+
+\
+
+***
+We start with an extensive setup chunk in which we:
+
+1. *Load* all the *packages* we use;
+2. *Read* the *data* from a SQL Server database and load tables into separate tibbles
+3. *Clean data* and preparation
+\
+
+***
+\
+
+### 1. Load libraries
+```{r Loading libraries, include=FALSE}
+
+# Packages have proprogrammed functions that solve specific problems and expands the R vocabulary
+library("tidyverse") # includes packages like dplyr and ggplot2
+library("lubridate") # working with dates and times
+library("RMySQL") # database Interface and 'MySQL' Driver for R
+
+```
+`End load libraries`
+
+<BR><BR><BR><BR>
+
+### 2. Read the data from MySQL and load tables into separate tibbles
+```{r loading from mssql, include=FALSE}
+
+# Settings
+db_host <- '127.0.0.1' # for local access or use studmysql01.fhict.local' when using FHICT Self Service Portal
+db_port <- 3306
+db_name <- 'database_name'
+db_user <- 'your_name'
+db_password <- 'your_password'
+#db_user  <- rstudioapi::showPrompt('Login', 'Enter MySQL user name', '') # does not get saved to environment
+#db_password  <- rstudioapi::askForPassword('Enter MySQL user password') # dont get saved to environment
+
+# Read data from db
+mydb <-  dbConnect(MySQL(), host = db_host, port = db_port, dbname = db_name, user = db_user, password = db_password)
+
+# Store tables into dataframes
+db_tables <- dbListTables(mydb)
+
+# Iterate throught tables, load each table and assign it to a named dataframe
+lapply(db_tables, function(x) {
+  rs <- dbSendQuery(mydb, paste0("select * from ", x))
+  assign(x, fetch(rs, n = -1), envir = sys.frame())
+  rm(rs) # delete temporary variable
+  })
+
+#on.exit(dbDisconnect(mydb)) # close database connection
+
+# Clean up
+rm(db_user, db_password, db_name, db_host, db_port, db_tables)
+
+```
+`End read and load data'
+
+<BR><BR>
+
+### 3. Data cleaning and preparation
+```{r data cleaning and preparation}
+
+# OPTIONAL: Remove empty observations (rows.)
+# cleandf <- drop_na(exceldf, <NAME>) # Delete observations with the value NA after a specific variable
+# cleandf <- na.omit(exceldf) # Remove all observations where a variable has the value NA
+
+#knitr::opts_chunk$set(warning = FALSE, message = FALSE) # suppress all warning messages 
+
+#Information about tables present in database
+#dbListTables(mydb)
+#dbListFields(mydb, "<TABLE>") # change table name accordingly
+
+```
+`End data cleaning and preparation`
+
+\
+
+***
+**--> Example chunks <--**
+
+***
+\
+
+### Example SQL code chunk using dbGetQuery
+```{r Example histogram from dbGetQuery}
+
+# Returns the result of a SQL query as a data frame
+query1 <- dbGetQuery(mydb,
+                     "SELECT catcode, count(catcode) as aantal
+                     FROM artikel
+                     GROUP BY catcode")
+
+query1 %>% 
+  ggplot(aes(x = catcode, y = aantal)) + 
+  geom_col()
+
+```
+`End example SQL code chunk using dbGetQuery`
+
+<BR><BR>
+
+### Example SQL code chunk capture in R dataframe and plot result
+```{sql connection=mydb, output.var = "query1", label='Store result in outputvariable'}
+
+SELECT catcode, count(catcode) as aantal
+FROM artikel
+GROUP BY catcode
+
+```
+
+```{r Plot result from previous SQL chunk}
+
+query1 %>% 
+  ggplot(aes(x = catcode, y = aantal)) + 
+  geom_col()
+
+```
+`End example SQL code chunk capture in R dataframe and plot result`
+
+<BR><BR>
+
+### Example code chunk from dataframe
+```{r Example histogram from dataframe}
+
+  artikel %>% 
+  select(catcode) %>% 
+  ggplot(aes(catcode)) +
+  geom_histogram(stat = "count")
+
+```
+`End example code chunk from dataframe`
+
+\
+
+***
+**--> From here you make your own chunks <--**
+
+***
+\

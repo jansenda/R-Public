@@ -1,0 +1,149 @@
+---
+title: "R Notebook - Read all Excel sheets and store them into separate tibbles (with SQL)"
+date: "March 2023"
+author: "Daan Jansen"
+output:
+  html_document:
+    df_print: paged
+    html_notebook: default
+    pdf_document: default
+    theme:
+      bootswatch: journal
+---
+
+\
+
+***
+We start with an extensive setup chunk in which we:
+
+1. *Load* all the *packages* we use;
+2. *Read* the *data* from a SQL Server database and load tables into separate tibbles
+3. *Clean data* and preparation
+\
+
+***
+\
+
+### 1. Load libraries
+```{r Loading libraries, include=FALSE}
+
+# Packages have proprogrammed functions that solve specific problems and expands the R vocabulary
+library("tidyverse") # includes packages like dplyr and ggplot2
+library("readxl") # library to read Excel files
+library("DBI") # Ephemeral in-memory RSQLite database
+library("lubridate") # working with dates and times
+
+```
+`End load libraries`
+
+<BR><BR>
+
+### 2. Read all Excel sheets and load into separate tibbles
+```{r Loading data from Excel, include=FALSE}
+
+# Change these parameters accordingly
+path <- "data/KlantArtikel.xlsx" # change file name accordingly
+endsWith <- "datum"
+
+# Create an in-memory SQLite database
+con <- DBI::dbConnect(RSQLite::SQLite(), ":memory:")
+# Helper function to convert date columns for SQLite usage
+convertDateColumns <- function(x, endsWith) {
+  x %>% 
+    mutate_at(vars(ends_with(endsWith)), as.character)
+}
+
+# Read all Excel sheets
+sheets <-
+  excel_sheets(path) %>%
+  set_names() %>%
+  map(read_excel, path = path)
+
+# Loading sheets into tables in SQLite database
+  lapply(seq_along(sheets), function(x) {copy_to(con, convertDateColumns(sheets[[x]], endsWith), names(sheets)[[x]])})
+# Expanding sheets list to separate tibbles
+  lapply(seq_along(sheets), function(x) {assign(names(sheets)[[x]], sheets[[x]], envir = sys.frame())})
+  
+# Clean up
+rm(sheets, convertDateColumns, path, endsWith)
+
+```
+`End read and load data`
+
+<BR><BR>
+
+### 3. Data cleaning and preparation
+```{r data cleaning and preparation}
+
+# OPTIONAL: Remove empty observations (rows.)
+# cleandf <- drop_na(exceldf, <NAME>) # Delete observations with the value NA after a specific variable
+# cleandf <- na.omit(exceldf) # Remove all observations where a variable has the value NA
+
+#knitr::opts_chunk$set(warning = FALSE, message = FALSE) # suppress all warning messages 
+```
+`End data cleaning and preparation`
+
+\
+
+***
+**--> Example chunks <--**
+
+***
+\
+
+### Example SQL code chunk using dbGetQuery
+```{r Example histogram from dbGetQuery}
+
+# Returns the result of a SQL query as a data frame
+query1 <- dbGetQuery(con,
+                     "SELECT catcode, count(catcode) as aantal
+                     FROM artikel
+                     GROUP BY catcode")
+
+query1 %>% 
+  ggplot(aes(x = catcode, y = aantal)) + 
+  geom_col()
+
+```
+`End example SQL code chunk using dbGetQuery`
+
+<BR><BR>
+
+### Example SQL code chunk capture in R dataframe and plot result
+```{sql connection=con, output.var = "query1", label='Store result in outputvariable'}
+
+SELECT catcode, count(catcode) as aantal
+FROM artikel
+GROUP BY catcode
+
+```
+
+```{r Plot result from previous SQL chunk}
+
+query1 %>% 
+  ggplot(aes(x = catcode, y = aantal)) + 
+  geom_col()
+
+```
+`End example SQL code chunk capture in R dataframe and plot result`
+
+<BR><BR>
+
+### Example code chunk from dataframe
+```{r Example}
+
+  artikel %>% 
+  select(catcode) %>% 
+  ggplot(aes(catcode)) +
+  geom_histogram(stat = "count")
+
+```
+`End example code chunk from dataframe`
+
+\
+
+***
+**--> From here you make your own chunks <--**
+
+***
+\

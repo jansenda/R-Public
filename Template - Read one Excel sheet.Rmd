@@ -1,0 +1,87 @@
+---
+title: "R Notebook - Read one Excel sheet"
+date: "March 2023"
+author: "Daan Jansen"
+output:
+  html_document:
+    df_print: paged
+    html_notebook: default
+    pdf_document: default
+    theme:
+      bootswatch: journal
+---
+
+\
+
+***
+We start with an extensive setup chunk in which we:
+
+1. *Load* all the *packages* we use;
+2. *Read* the *data* from a SQL Server database and load tables into separate tibbles
+3. *Clean data* and preparation
+\
+
+***
+\
+
+### 1. Load libraries
+```{r Loading libraries}
+
+# Packages have proprogrammed functions that solve specific problems and expands the R vocabulary
+library("tidyverse") # includes packages like dplyr and ggplot2
+library("readxl") # library to read Excel files
+
+```
+`End load libraries`
+
+<BR><BR>
+
+### 2. Read the data from an Excel file and load into a tibble
+```{r Read data file(s)}
+
+# change the Excel file name accordingly
+df <- read_excel("data/dataset_verkopen.xlsx") # read Excel file and load it into data frame (change file name accordingly)
+
+```
+`End read and load data`
+
+<BR><BR>
+
+### 3. Data cleaning and preparation
+```{r data cleaning and preparation}
+
+# OPTIONAL: Remove empty observations (rows.)
+# cleandf <- drop_na(exceldf, <NAME>) # Delete observations with the value NA after a specific variable
+# cleandf <- na.omit(exceldf) # Remove all observations where a variable has the value NA
+
+#knitr::opts_chunk$set(warning = FALSE, message = FALSE) # suppress all warning messages 
+
+```
+`End data cleaning and preparation`
+
+\
+
+***
+**--> Example chunks <--**
+
+***
+\
+
+### Example code chunk from dataframe
+```{r Example histogram from dataframe}
+
+  df %>% 
+  select(Continent) %>% 
+  ggplot(aes(Continent)) +
+  geom_histogram(stat = "count")
+
+```
+`End example code chunk from dataframe`
+
+\
+
+***
+**--> From here you make your own chunks <--**
+
+***
+\
